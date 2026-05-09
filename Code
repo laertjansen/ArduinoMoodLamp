@@ -1,0 +1,85 @@
+// Rotary encoder + RGB LED + Arduino Uno
+
+int redLED = 3;
+int greenLED = 5;
+int blueLED = 6;
+
+const int clkPin = 8;
+const int dtPin  = 10;
+const int swPin  = 12;
+
+int lastCLK;
+int colorIndex = 0;
+
+unsigned long lastButtonPress = 0;
+bool buttonHeld = false;
+
+void setColor(int index) {
+
+  switch (index % 8) {
+
+    case 0: analogWrite(redLED, 255); analogWrite(greenLED, 0);   analogWrite(blueLED, 0);   break;
+    case 1: analogWrite(redLED, 0);   analogWrite(greenLED, 255); analogWrite(blueLED, 0);   break;
+    case 2: analogWrite(redLED, 0);   analogWrite(greenLED, 0);   analogWrite(blueLED, 255); break;
+    case 3: analogWrite(redLED, 255); analogWrite(greenLED, 255); analogWrite(blueLED, 0);   break;
+    case 4: analogWrite(redLED, 255); analogWrite(greenLED, 0);   analogWrite(blueLED, 255); break;
+    case 5: analogWrite(redLED, 0);   analogWrite(greenLED, 255); analogWrite(blueLED, 255); break;
+    case 6: analogWrite(redLED, 255); analogWrite(greenLED, 120); analogWrite(blueLED, 0);   break;
+    case 7: analogWrite(redLED, 255); analogWrite(greenLED, 255); analogWrite(blueLED, 255); break;
+  }
+}
+
+void setup() {
+
+  pinMode(redLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(blueLED, OUTPUT);
+
+  pinMode(clkPin, INPUT);
+  pinMode(dtPin, INPUT);
+  pinMode(swPin, INPUT_PULLUP);
+
+  lastCLK = digitalRead(clkPin);
+
+  setColor(colorIndex);
+}
+
+void loop() {
+
+  int currentCLK = digitalRead(clkPin);
+
+  if (currentCLK != lastCLK && currentCLK == HIGH) {
+
+    if (digitalRead(dtPin) != currentCLK) {
+      colorIndex++;
+    } else {
+      colorIndex--;
+    }
+
+    setColor(colorIndex);
+  }
+
+  lastCLK = currentCLK;
+
+  if (digitalRead(swPin) == LOW) {
+
+    if (!buttonHeld) {
+      lastButtonPress = millis();
+      buttonHeld = true;
+    }
+
+    if (millis() - lastButtonPress > 800) {
+      colorIndex = 0;
+      setColor(colorIndex);
+    }
+
+  } else {
+
+    if (buttonHeld && millis() - lastButtonPress < 800) {
+      colorIndex = random(0, 8);
+      setColor(colorIndex);
+    }
+
+    buttonHeld = false;
+  }
+}
